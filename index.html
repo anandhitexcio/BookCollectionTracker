@@ -7,64 +7,122 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 40px;
+      margin: 20px;
       background-color: #f5f5f5;
+      color: #333;
+      transition: background-color 0.3s, color 0.3s;
     }
+
+    body.dark-mode {
+      background-color: #1e1e1e;
+      color: #eee;
+    }
+
     h1 {
       text-align: center;
-      color: #333;
+      margin-bottom: 20px;
     }
-    .form-group {
+
+    .form-group, .btn-group {
+      max-width: 500px;
+      margin: 0 auto 20px auto;
       display: flex;
       flex-direction: column;
-      max-width: 400px;
-      margin: 10px auto;
+      gap: 10px;
     }
-    input, select, button {
+
+    input, button {
       padding: 10px;
-      margin: 5px 0;
       font-size: 16px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
     }
+
+    input:focus {
+      outline: none;
+      border-color: #4CAF50;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .btn-group {
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 30px;
+      margin-top: 20px;
     }
+
     th, td {
       border: 1px solid #ccc;
-      padding: 8px;
+      padding: 10px;
       text-align: center;
     }
+
     th {
       background-color: #333;
       color: white;
     }
-    .btn-group {
-      text-align: center;
-      margin-top: 20px;
+
+    .dark-mode th {
+      background-color: #555;
     }
-    button {
-      margin: 5px;
+
+    .delete-btn {
+      background-color: crimson;
+      color: white;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 3px;
       cursor: pointer;
+    }
+
+    .delete-btn:hover {
+      background-color: darkred;
+    }
+
+    .toggle-dark {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 6px 12px;
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
 
+  <button class="toggle-dark" onclick="toggleDarkMode()">🌗 Toggle Dark Mode</button>
+
   <h1>📚 Book Collection Tracker</h1>
 
   <div class="form-group">
-    <input type="text" id="title" placeholder="Book Title" />
-    <input type="text" id="author" placeholder="Author" />
-    <input type="text" id="genre" placeholder="Genre" />
-    <input type="number" id="year" placeholder="Year" />
+    <input type="text" id="title" placeholder="Enter book title (e.g. The Hobbit)" />
+    <input type="text" id="author" placeholder="Author (e.g. J.R.R. Tolkien)" />
+    <input type="text" id="genre" placeholder="Genre (e.g. Fantasy)" />
+    <input type="number" id="year" placeholder="Year (e.g. 1937)" />
     <button onclick="addBook()">Add Book</button>
   </div>
 
   <div class="btn-group">
-    <button onclick="exportCSV()">Export as CSV</button>
-    <button onclick="exportJSON()">Export as JSON</button>
-    <button onclick="clearBooks()">Clear All Books</button>
+    <button onclick="loadSampleBooks()">📥 Load Sample Books</button>
+    <button onclick="exportCSV()">⬇️ Export as CSV</button>
+    <button onclick="exportJSON()">⬇️ Export as JSON</button>
+    <button onclick="clearBooks()">🗑️ Clear All Books</button>
   </div>
 
   <table id="bookTable">
@@ -75,13 +133,14 @@
         <th>Author</th>
         <th>Genre</th>
         <th>Year</th>
+        <th>Delete</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
 
   <script>
-    const books = JSON.parse(localStorage.getItem('books')) || [];
+    let books = JSON.parse(localStorage.getItem('books')) || [];
 
     function saveBooks() {
       localStorage.setItem('books', JSON.stringify(books));
@@ -97,6 +156,7 @@
           <td>${book.author}</td>
           <td>${book.genre}</td>
           <td>${book.year}</td>
+          <td><button class="delete-btn" onclick="deleteBook(${index})">Delete</button></td>
         </tr>`;
         tbody.insertAdjacentHTML('beforeend', row);
       });
@@ -123,6 +183,14 @@
       document.getElementById('year').value = '';
     }
 
+    function deleteBook(index) {
+      if (confirm('Are you sure you want to delete this book?')) {
+        books.splice(index, 1);
+        saveBooks();
+        renderBooks();
+      }
+    }
+
     function exportCSV() {
       const rows = [['Title', 'Author', 'Genre', 'Year'], ...books.map(book => [book.title, book.author, book.genre, book.year])];
       const csv = rows.map(r => r.map(field => `"${field}"`).join(',')).join('\n');
@@ -147,13 +215,28 @@
 
     function clearBooks() {
       if (confirm('Are you sure you want to delete all saved books?')) {
-        books.length = 0;
+        books = [];
         saveBooks();
         renderBooks();
       }
     }
 
-    // Load books on page load
+    function loadSampleBooks() {
+      books = [
+        { title: "The Great Gatsby", author: "F. Scott Fitzgerald", genre: "Classic", year: 1925 },
+        { title: "To Kill a Mockingbird", author: "Harper Lee", genre: "Fiction", year: 1960 },
+        { title: "1984", author: "George Orwell", genre: "Dystopian", year: 1949 },
+        { title: "Sapiens", author: "Yuval Noah Harari", genre: "Non-fiction", year: 2011 }
+      ];
+      saveBooks();
+      renderBooks();
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+    }
+
+    // Initial render
     renderBooks();
   </script>
 
