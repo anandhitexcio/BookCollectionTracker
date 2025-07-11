@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Book Collection Tracker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background-color: #f5f5f5;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      max-width: 400px;
+      margin: 10px auto;
+    }
+    input, select, button {
+      padding: 10px;
+      margin: 5px 0;
+      font-size: 16px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 30px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #333;
+      color: white;
+    }
+    .btn-group {
+      text-align: center;
+      margin-top: 20px;
+    }
+    button {
+      margin: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📚 Book Collection Tracker</h1>
+
+  <div class="form-group">
+    <input type="text" id="title" placeholder="Book Title" />
+    <input type="text" id="author" placeholder="Author" />
+    <input type="text" id="genre" placeholder="Genre" />
+    <input type="number" id="year" placeholder="Year" />
+    <button onclick="addBook()">Add Book</button>
+  </div>
+
+  <div class="btn-group">
+    <button onclick="exportCSV()">Export as CSV</button>
+    <button onclick="exportJSON()">Export as JSON</button>
+    <button onclick="clearBooks()">Clear All Books</button>
+  </div>
+
+  <table id="bookTable">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Title</th>
+        <th>Author</th>
+        <th>Genre</th>
+        <th>Year</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const books = JSON.parse(localStorage.getItem('books')) || [];
+
+    function saveBooks() {
+      localStorage.setItem('books', JSON.stringify(books));
+    }
+
+    function renderBooks() {
+      const tbody = document.querySelector('#bookTable tbody');
+      tbody.innerHTML = '';
+      books.forEach((book, index) => {
+        const row = `<tr>
+          <td>${index + 1}</td>
+          <td>${book.title}</td>
+          <td>${book.author}</td>
+          <td>${book.genre}</td>
+          <td>${book.year}</td>
+        </tr>`;
+        tbody.insertAdjacentHTML('beforeend', row);
+      });
+    }
+
+    function addBook() {
+      const title = document.getElementById('title').value.trim();
+      const author = document.getElementById('author').value.trim();
+      const genre = document.getElementById('genre').value.trim();
+      const year = document.getElementById('year').value.trim();
+
+      if (!title || !author || !genre || !year) {
+        alert('Please fill in all fields.');
+        return;
+      }
+
+      books.push({ title, author, genre, year });
+      saveBooks();
+      renderBooks();
+
+      document.getElementById('title').value = '';
+      document.getElementById('author').value = '';
+      document.getElementById('genre').value = '';
+      document.getElementById('year').value = '';
+    }
+
+    function exportCSV() {
+      const rows = [['Title', 'Author', 'Genre', 'Year'], ...books.map(book => [book.title, book.author, book.genre, book.year])];
+      const csv = rows.map(r => r.map(field => `"${field}"`).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'book_collection.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportJSON() {
+      const blob = new Blob([JSON.stringify(books, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'book_collection.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function clearBooks() {
+      if (confirm('Are you sure you want to delete all saved books?')) {
+        books.length = 0;
+        saveBooks();
+        renderBooks();
+      }
+    }
+
+    // Load books on page load
+    renderBooks();
+  </script>
+
+</body>
+</html>
